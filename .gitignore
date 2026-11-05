@@ -1,0 +1,9 @@
+# Fichiers temporaires et journaux locaux
+*.tmp
+*.log
+*.lock
+Thumbs.db
+desktop.ini
+.DS_Store
+# Archives de publication générées localement
+*.zip

@@ -1,0 +1,70 @@
+﻿SUIVI CLAUDE
+
+SOURCE PRINCIPALE : LE COMPTE CLAUDE
+
+Quand Claude est sélectionné, le widget interroge toutes les 60 secondes le
+service d'usage du compte, le même que la commande /usage de Claude Code :
+https://api.anthropic.com/api/oauth/usage
+
+Il en lit la fenêtre de session de 5 heures et la fenêtre de 7 jours (part
+utilisée et échéance). Ces valeurs couvrent toute la consommation du compte :
+extension VS Code, Claude Code en terminal, site web et applications mobiles.
+Le nom de l'offre (Pro, Max 5x, Max 20x…) est affiché à titre indicatif.
+
+CONNEXION UTILISÉE
+
+Le widget réutilise la connexion enregistrée par Claude Code sur ce PC :
+<dossier Claude>\.credentials.json
+
+- Le jeton est relu à chaque interrogation ; il n'est jamais copié, journalisé
+  ni affiché.
+- Il est envoyé uniquement à api.anthropic.com, en HTTPS.
+- Le widget ne renouvelle jamais la connexion : cela pourrait déconnecter
+  Claude Code. Si elle a expiré, ouvrir Claude Code suffit à la renouveler,
+  puis le suivi reprend tout seul.
+- Après un refus pour excès de demandes, le widget attend cinq minutes.
+
+Ce service n'est pas documenté publiquement par Anthropic. S'il change, le
+widget affiche « en attente » ; il n'invente jamais de valeur.
+
+ACTIVITÉ RÉCENTE
+
+Le panneau liste les dernières conversations Claude Code de ce PC, à partir
+des fichiers <dossier Claude>\projects\*\*.jsonl. Seuls l'heure de dernière
+modification, le dossier de départ de la conversation et le nom du modèle
+sont extraits ; le contenu des messages n'est ni lu pour l'affichage ni
+conservé. Ces conversations ne sont pas converties en pourcentage de quota.
+
+Si le dossier d'un projet contient une icône d'application à un emplacement
+habituel (favicon, icon, logo, apple-touch-icon, fichier portant le nom du
+projet, .ico à la racine ou dans assets, public, build, resources…), elle
+remplace l'initiale du projet. « Actualiser » relance la recherche.
+
+SOURCE FACULTATIVE : LA BARRE DE STATUT DU TERMINAL
+
+Clic droit > Activer la barre de statut Claude Code ajoute la fonction
+officielle statusLine de Claude Code en terminal. Elle affiche une ligne
+« Claude | 5 h : ... | 7 j : ... » et transmet aussi ses mesures au widget.
+L'extension VS Code n'exécute pas cette barre : c'est pourquoi le compte est
+la source principale. La mesure la plus récente des deux sources est affichée.
+
+Si une barre personnalisée existe déjà, elle n'est remplacée qu'après
+confirmation, avec une sauvegarde. La désactivation la restaure, uniquement si
+la configuration n'a pas été modifiée entretemps.
+
+Fichiers créés par cette option, dans le dossier de configuration Claude :
+- settings.json : seule la propriété statusLine est remplacée ;
+- codex-pill\ClaudePill.StatusLine.ps1 : collecteur local copié sur place ;
+- codex-pill\integration.json : propriété précédente pour la restauration ;
+- codex-pill\settings-before-....json : sauvegarde avant modification ;
+- codex-pill\cache\session-....json : quotas et métadonnées sélectionnées.
+
+VÉRIFICATION
+
+tests\Test-Claude.ps1 couvre la barre de statut (installation, chemins avec
+apostrophes et espaces, UTF-8, expiration, restauration) ainsi que la source
+« compte » sans réseau : conversion des fenêtres, nom de l'offre et du modèle,
+choix de la mesure la plus récente et lecture de l'activité.
+
+Documentation officielle de la barre de statut :
+https://code.claude.com/docs/en/statusline

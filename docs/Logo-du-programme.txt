@@ -1,0 +1,21 @@
+﻿LOGO CODEX PILL
+
+Logo créé pour ce programme : chevrons arrondis jade et blanc sur une tuile
+graphite. Fichier PNG avec transparence et ICO Windows à neuf tailles.
+
+Le logo du programme est distinct des logos officiels OpenAI/Claude utilisés
+pour identifier les services dans la sélection. Ces derniers proviennent de
+leurs sites officiels ; voir assets/providers/Sources.txt.
+
+Le PNG du programme a été généré avec l'outil de création d'images intégré,
+puis converti en ICO pour Windows sans redessiner le visuel.
+Tailles ICO : 16, 20, 24, 32, 40, 48, 64, 128 et 256 pixels.
+
+Prompt de création :
+Create one finished premium application icon for a small Windows desktop
+utility named Codex Pill, which monitors coding usage quotas. No text.
+Two opposing thick softly rounded code chevrons forming a compact symbol.
+Left half jade mint (#69C9AA), right half warm white (#ECEDEF), centered on
+a deep neutral graphite (#191A1E) rounded-square tile. Clean restrained
+vector-like geometry, readable at small sizes. Transparent outside the tile.
+No brand logos, no 3D, no neon, no blue or purple.

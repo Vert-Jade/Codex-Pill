@@ -1,0 +1,155 @@
+﻿CODEX PILL 2.1 — AJOUTS DU 2 NOVEMBRE 2026
+
+- Case de masquage de console persistante, cochée par défaut.
+- Bootstrap qui crée le processus du widget sans console.
+- Réaffichage optionnel d'une console dédiée, sans masquer les autres
+  fenêtres Windows Terminal. Diagnostic toujours visible.
+- Écriture atomique des préférences : correction du passage d'un véritable
+  null .NET au paramètre de sauvegarde de File.Replace.
+- Croix vectorielle centrée, bouton réduire, espacements et états de focus
+  stabilisés ; logo du programme intégré au panneau et à la pastille.
+- Icône de notification, menu graphite et actions afficher/masquer/quitter.
+- Raccourci Bureau avec logo et chemin calculé sur le PC destinataire.
+- Choix Codex/Claude avec vrais logos officiels, préférence mémorisée.
+- Lecteur Claude Code via statusLine officielle, installation explicite,
+  sauvegarde et restauration conditionnelle de l'ancienne configuration.
+- Aucun quota d'abonnement calculé à partir des tokens de contexte.
+- Les snapshots sont identifiés par fournisseur et dossier pour éviter
+  d'afficher une ancienne source après un changement de sélection.
+- Les données de démonstration sont génériques pour le partage du paquet.
+
+Vérification ciblée de cette mise à jour : analyse syntaxique de tous les PS1,
+compilation du pont C# de console, quatre contrôles de persistance/migration,
+18 assertions Claude (dont collecteur réel en processus séparé), quatre
+contrôles de changement Codex/Claude et trois contrôles du cycle de vie du
+lecteur. Les 22 assertions du lecteur Codex restent dans tests/Test-Core.ps1.
+L'analyse XML, les contrôles nommés et les fichiers d'icônes ont été vérifiés.
+Les tests graphiques et Win32 ne sont pas exécutables dans cet environnement
+Linux : aucune validation native Windows supplémentaire n'est revendiquée.
+
+Documentation Claude : https://code.claude.com/docs/en/statusline
+Documentation console : https://learn.microsoft.com/en-us/windows/console/freeconsole
+Notification Windows : https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.notifyicon
+
+HISTORIQUE DE LA VERSION 2.0
+
+CODEX PILL 2.0 — NOTES TECHNIQUES
+Version préparée le 1 novembre 2026
+
+PÉRIMÈTRE
+
+Refonte portable Windows PowerShell 5.1 + WPF. Pas de téléchargement ni
+d'installation de dépendance au démarrage. Le cœur de lecture est séparé de
+l'affichage et testé avec des fichiers JSONL synthétiques.
+
+DÉFAUTS CONFIRMÉS DANS LA VERSION FOURNIE
+
+- La fonction TB emploie $t pour un TextBlock alors que $T désigne le thème.
+  PowerShell est insensible à la casse ; le thème est masqué dans la fonction.
+- Les paramètres $s de gestionnaires masquent le dictionnaire $S lorsqu'une
+  fonction de sauvegarde le recherche dans la portée appelante.
+- Le mode de fermeture WPF par défaut peut conserver la fenêtre de statistiques
+  et le processus après la fermeture de la pastille.
+- Une ligne JSON invalide empêche l'avancement du curseur de lecture et peut
+  provoquer relectures, duplication d'événements et croissance de mémoire.
+- La lecture et le tri de l'historique tournent sur le thread de l'interface.
+- Le scan ignore des sessions anciennes reprises ; les limites de mémoire
+  et de travail par rafraîchissement sont absentes.
+- Une échéance passée est transformée à tort en disponibilité confirmée.
+- Les variations d'un quota global sont attribuées aux projets sans preuve.
+- Le script d'arrêt annonce toujours le succès, sans vérifier la fermeture.
+
+Les fichiers d'origine ne présentent pas de faute syntaxique PowerShell
+détectée ; le PS1 était déjà encodé en UTF-8 avec BOM. Les VBS sont cohérents
+à la lecture. Sans le journal Windows du lancement raté, la cause exacte de
+cette panne particulière ne peut pas être certifiée. La nouvelle version
+rend désormais les erreurs de démarrage visibles et les journalise.
+
+CORRECTIONS DE STRUCTURE
+
+- État explicitement nommé et qualifié script:, sans variables courtes
+  ambiguës. Une seule instance par utilisateur et session Windows.
+- Fermeture de l'application avec la fenêtre principale ; fermeture du panneau,
+  réveil et terminaison du lecteur, libération des événements et du mutex.
+- Lecture dans un runspace dédié, sans travail de fichiers sur le thread WPF.
+- Polling usuel de 4 secondes ; rattrapage plus rapide lors du scan initial.
+- Les écritures de paramètres et de l'identité sont atomiques.
+- L'arrêt forcé exige une identité de processus vérifiée.
+- Menu sombre, jauges fines, panneau transitoire, déplacement et position
+  mémorisée ; contrôle des positions hors écran et commande de replacement.
+- Les barres du panneau suivent sa largeur disponible, y compris avec
+  une barre de défilement sur un écran de faible hauteur.
+- Démarrage Windows facultatif et lanceurs CMD si VBScript indisponible.
+
+FORMAT ET FIABILITÉ DES DONNÉES
+
+Lecture de token_count dans event_msg et des métadonnées session_meta /
+turn_context. info et rate_limits sont optionnels. used_percent est borné
+pour l'affichage ; resets_at peut être absent. window_minutes détermine
+le libellé. Le moteur accepte les quotas sans limit_id ou limit_id=codex ;
+il évite de remplacer le quota ordinaire par un quota propre à un modèle.
+
+Chaque fenêtre garde sa date d'observation. Les mesures sont triées par date
+et non par ordre de lecture. Une fenêtre expirée reste explicitement inconnue.
+Les lignes incomplètes sont reprises ; le partage des fichiers permet à Codex
+de continuer à écrire. Les erreurs JSON sont isolées.
+
+LIMITES POUR GARDER UN WIDGET LÉGER
+
+- Maximum 96 journaux les plus récemment modifiés conservés en mémoire.
+- Les archives .jsonl.zst ne sont pas décompressées.
+- Pour un très gros journal existant : en-tête de 64 Kio et dernier Mio.
+  Une mesure placée avant une énorme sortie d'outil peut donc être absente
+  jusqu'à un nouvel événement local. Le widget ne crée pas de valeur fictive.
+- Blocs de 256 Kio, travail visé autour de 300 ms et environ 1 Mio par cycle
+  (l'en-tête peut s'ajouter). Ce sont des budgets logiciels ; une opération
+  de disque bloquante peut durer davantage. Elle reste hors du thread WPF.
+- Le journal le plus récemment modifié est traité en priorité jusqu'à sa
+  fin ; les autres continuent leur rotation. Le scan des sous-dossiers est
+  incrémental et exclut les points de réanalyse.
+- Un changement de compte ou l'activité d'un autre appareil ne peut être
+  confirmé sans nouveau snapshot local. Aucun fichier de connexion n'est lu.
+
+VÉRIFICATIONS EXÉCUTÉES
+
+- Analyse syntaxique de tous les PS1 : zéro erreur.
+- 22 assertions du lecteur : dossier absent/vide, données récentes et anciennes,
+  métadonnées, cumul de tokens, durées réelles, lignes incomplètes, UTF-8 coupé,
+  corruption isolée, mises à jour partielles, ordre des événements, quotas
+  de modèles ignorés, expiration, troncature, quota hebdomadaire seul,
+  ligne géante, limites de mémoire, culture française et mesure ancienne.
+- Un scénario avec 96 gros journaux vérifie que le quota en fin du plus récent
+  est disponible rapidement (un cycle observé) sous le budget de lecture.
+- Test d'intégration du vrai lecteur en arrière-plan : publication de mesure,
+  changement de source et arrêt sans attendre l'intervalle de polling.
+- Audit indépendant des lanceurs, chemins quotés, arrêt ciblé et cycle WPF.
+- Vérification XML des XAML, de leurs ressources et des contrôles nommés.
+
+Environnement exécuté : PowerShell 7.6.9 officiel, Linux. Pas d'exécution WPF
+réelle ni de session Windows distante disponible. Ne pas confondre ces tests
+avec une validation de rendu, de DPI mixtes ou de WScript sur le PC final.
+
+Tests reproductibles depuis le dossier du produit :
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Core.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-ReaderLifecycle.ps1
+
+Ces tests utilisent uniquement leurs propres dossiers temporaires.
+Pour le test natif de démarrage et de construction WPF :
+Diagnostic Codex Pill.cmd
+
+SOURCES PRIMAIRES CONSULTÉES
+
+Format des événements et des quotas Codex :
+https://github.com/openai/codex/blob/main/codex-rs/protocol/src/protocol.rs
+
+Lecture des durées et des pourcentages :
+https://github.com/openai/codex/blob/main/codex-rs/codex-api/src/rate_limits.rs
+
+Notion de mesure ancienne dans l'interface Codex :
+https://github.com/openai/codex/blob/main/codex-rs/tui/src/status/rate_limits.rs
+
+Règles de parenté des fenêtres WPF :
+https://learn.microsoft.com/en-us/dotnet/api/system.windows.window.owner
+
+Ce widget est un outil indépendant ; il n'est pas une application officielle
+d'OpenAI. Le format des journaux peut évoluer et nécessiter une adaptation.

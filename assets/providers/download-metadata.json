@@ -1,0 +1,34 @@
+[
+  {
+    "file": "Claude.original.svg",
+    "source_url": "https://claude.com/icon.svg",
+    "final_url": "https://claude.com/icon.svg",
+    "mime_type": "image/svg+xml",
+    "sha256": "b150888bc7257af83e3b85d3c2be4294f88986026f8168f6c12fc1fde6697350",
+    "bytes": 2558
+  },
+  {
+    "file": "Claude.original.png",
+    "source_url": "https://claude.com/icon.png",
+    "final_url": "https://claude.com/icon.png",
+    "mime_type": "image/png",
+    "sha256": "733f24f4c52acb15eb0fbded1cf40eb42b4ba8e62b882acac70b6234b50919a8",
+    "bytes": 4787
+  },
+  {
+    "file": "OpenAI.original.svg",
+    "source_url": "https://openai.com/favicon.svg",
+    "final_url": "https://openai.com/favicon.svg",
+    "mime_type": "image/svg+xml",
+    "sha256": "ed615b8fd9703863918daae6106396a42926fd167abc1bcad4aca860ff0f7ba6",
+    "bytes": 2466
+  },
+  {
+    "file": "OpenAI.original.png",
+    "source_url": "https://openai.com/apple-icon.png?apple-icon.3o0tf8iy4mx7y.png",
+    "final_url": "https://openai.com/apple-icon.png?apple-icon.3o0tf8iy4mx7y.png",
+    "mime_type": "image/png",
+    "sha256": "20e104394082ee2d501a2bd118ec36b8ae8bcf75c8ab5dee51c3a361e34f6837",
+    "bytes": 6578
+  }
+]

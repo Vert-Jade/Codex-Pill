@@ -1,0 +1,37 @@
+{
+  "retrieved_on": "2026-11-02",
+  "purpose": "Provider identification inside an independent local quota widget.",
+  "assets": [
+    {
+      "provider": "Codex",
+      "display_file": "Codex.png",
+      "original_file": "OpenAI.original.png",
+      "original_vector": "OpenAI.original.svg",
+      "source_page": "https://openai.com/codex/",
+      "source_url": "https://openai.com/apple-icon.png?apple-icon.3o0tf8iy4mx7y.png",
+      "brand_guidelines": "https://openai.com/brand/",
+      "identity": "Official OpenAI Blossom, used to identify the OpenAI Codex provider. Not represented as a dedicated Codex-specific symbol.",
+      "processing": "Original official PNG bytes copied unchanged. No recoloring, distortion or AI generation.",
+      "dimensions": [
+        180,
+        180
+      ],
+      "display_sha256": "20e104394082ee2d501a2bd118ec36b8ae8bcf75c8ab5dee51c3a361e34f6837"
+    },
+    {
+      "provider": "Claude",
+      "display_file": "Claude.png",
+      "original_file": "Claude.original.svg",
+      "original_raster": "Claude.original.png",
+      "source_page": "https://claude.com/",
+      "source_url": "https://claude.com/icon.svg",
+      "identity": "Official Claude asterisk in its original terracotta color.",
+      "processing": "Unmodified original SVG rasterized with sharp/librsvg at 192x192, preserving its full viewBox, geometry, proportions, color and transparency.",
+      "dimensions": [
+        192,
+        192
+      ],
+      "display_sha256": "ae21496ba9f314bec13ec56570e24577057440bf95b983b32652aafef9ff760e"
+    }
+  ]
+}

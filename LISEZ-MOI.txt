@@ -1,0 +1,139 @@
+﻿CODEX PILL 2.2
+Suivi discret de Codex et de Claude Code pour Windows
+
+INSTALLATION ET RACCOURCI BUREAU
+
+1. Extrais TOUT le ZIP dans un dossier que tu conserveras, par exemple
+   Documents\Codex-Pill. Ne lance pas les fichiers à l'intérieur du ZIP.
+2. Pour mettre à jour une ancienne version, quitte-la d'abord depuis la
+   pastille ou l'icône près de l'horloge, puis remplace les fichiers du dossier.
+   Les préférences existantes sont conservées dans le profil Windows.
+3. Double-clique sur « Creer raccourci bureau.cmd ».
+   Cela crée le vrai raccourci « Codex Pill » sur ton Bureau, avec son logo.
+   Le chemin est calculé sur ton PC, y compris avec un Bureau OneDrive.
+4. Lance le raccourci. Tu peux aussi utiliser « Lancer Codex Pill.vbs » ou,
+   si VBScript est indisponible, « Lancer Codex Pill.cmd ».
+
+Aucun droit administrateur ni logiciel supplémentaire pour le widget.
+Il utilise Windows PowerShell et WPF intégrés. Si tu déplaces le dossier,
+recrée le raccourci. Le lancement Windows déjà activé se met à jour au
+prochain lancement ; il reste désactivé par défaut.
+
+CHOISIR L'IA À SUIVRE
+
+Clique sur la pastille. Le panneau propose deux choix :
+- Codex, avec le logo officiel OpenAI ;
+- Claude, avec le logo officiel Claude.
+
+Tu peux aussi choisir dans l'icône de notification : clic droit > Suivi.
+Le choix est mémorisé. Les mesures des deux fournisseurs ne sont jamais
+additionnées ou mélangées. Les pourcentages affichent la part RESTANTE :
+les jauges se vident à l'usage (orange sous 25 %, rouge sous 10 %).
+
+CODEX
+
+Lecture automatique des événements de quotas dans :
+%USERPROFILE%\.codex\sessions
+
+CODEX_HOME est respecté si défini. Clic droit > Choisir le dossier des données
+permet de sélectionner un autre dossier .codex.
+
+Les valeurs sont les dernières mesures présentes dans les journaux locaux.
+Une session qui ne fournit aucun quota laisse le compteur inconnu.
+
+CLAUDE
+
+Sélectionne Claude dans le panneau : c'est tout. Les quotas (session de 5 h
+et semaine) sont lus auprès du service d'usage de ton compte, le même que la
+commande /usage de Claude Code, toutes les 60 secondes. Ils couvrent toute la
+consommation du compte : extension VS Code, terminal, site web et mobile.
+
+Le widget utilise la connexion déjà enregistrée par Claude Code sur ce PC
+(<dossier Claude>\.credentials.json). Elle est relue à chaque fois, envoyée
+uniquement à api.anthropic.com, jamais copiée ni renouvelée par le widget.
+Si elle expire, ouvre Claude Code : le suivi reprend tout seul.
+
+L'activité récente liste les dernières conversations Claude Code de ce PC
+(projet, modèle). Si le dossier d'un projet contient une icône d'application
+(favicon, icon, logo, apple-touch-icon, fichier portant le nom du projet ou
+.ico à la racine ou dans assets, public, build…), elle remplace l'initiale.
+« Actualiser » relance cette recherche.
+
+En option, clic droit > Activer la barre de statut Claude Code ajoute aussi
+une ligne « Claude | 5 h : ... | 7 j : ... » dans Claude Code en terminal ;
+la mesure la plus récente des deux sources est affichée. La désactivation
+restaure la ligne précédente. Détails : docs\Suivi-Claude-Code.txt
+
+Dossier par défaut : %USERPROFILE%\.claude
+CLAUDE_CONFIG_DIR et le dossier choisi dans le widget sont respectés.
+
+MASQUER LA FENÊTRE DE COMMANDE
+
+Clic droit sur la pastille ou sur son icône de notification :
+[✓] Masquer la fenêtre de commande
+
+Coché : le programme reste actif sans fenêtre de commande.
+Décoché : une fenêtre de commande du widget peut être affichée.
+Le choix est mémorisé et le masquage est activé par défaut.
+Le diagnostic reste visible volontairement pour pouvoir lire ses résultats.
+
+RESTER DANS LA ZONE DE NOTIFICATION WINDOWS
+
+Le logo du programme se trouve près de l'horloge, éventuellement sous la
+flèche des icônes masquées. Windows décide de son placement ; tu peux le
+laisser dans cette zone ou le déplacer dans la partie visible.
+
+- Le bouton « réduire » du panneau masque la pastille et laisse le suivi actif.
+- Clic droit > Masquer la pastille fait la même chose.
+- Double-clic sur l'icône : réafficher la pastille.
+- Clic droit sur l'icône : afficher, masquer, ouvrir les détails, changer l'IA,
+  masquer la console, régler le premier plan ou quitter complètement.
+- La croix du panneau ferme uniquement les détails.
+- Quitter Codex Pill ferme le programme et retire l'icône de notification.
+
+AUTRES COMMANDES
+
+Glisser la pastille : déplacer, avec position mémorisée.
+Clic droit > Toujours au premier plan : épingler ou libérer la pastille.
+Clic droit > Démarrer avec Windows : activer ou désactiver le démarrage.
+Clic droit > Replacer en haut à droite : retrouver une pastille déplacée.
+Relancer le programme réaffiche l'instance déjà ouverte.
+
+Un tiret signifie une mesure inconnue. Une date de réinitialisation passée
+ne devient jamais un faux « 100 % disponibles ». Les mesures anciennes sont
+signalées. Actualiser relit les données locales ; cela ne contacte pas les
+serveurs d'IA et ne force pas une nouvelle mesure côté fournisseur.
+
+DÉPANNAGE
+
+Lance « Diagnostic Codex Pill.cmd ». Il vérifie les scripts et construit les
+contrôles Windows sans lancer un deuxième widget persistant.
+Journal : %APPDATA%\CodexPill\error.log
+Préférences : %APPDATA%\CodexPill\settings.json
+
+Arrêt depuis le dossier : Arreter Codex Pill.vbs ou Arreter Codex Pill.cmd.
+Anciennes versions encore actives : Nettoyer ancienne version.cmd permet de
+choisir uniquement les instances identifiées de Codex Pill à fermer.
+
+PARTAGER LE PROGRAMME
+
+Partage le ZIP complet. Chaque personne doit l'extraire dans son propre
+dossier puis exécuter « Creer raccourci bureau.cmd » pour obtenir son raccourci.
+Aucun chemin personnel, paramètre de compte, journal de conversation ou
+identifiant de connexion n'est inclus. Chacun suit ses propres données et
+active séparément Claude Code s'il souhaite l'utiliser.
+
+Le logo du programme est inclus en PNG et ICO multirésolution dans assets.
+Les logos de fournisseurs servent à les identifier et restent la propriété
+de leurs titulaires. Ce widget est indépendant d'OpenAI et d'Anthropic.
+Sources des logos : assets\providers\Sources.txt.
+
+VALIDATION
+
+Les tests des lecteurs, du changement d'IA, de la configuration Claude et du
+cycle de vie du lecteur passent sous PowerShell 7.6.9/Linux. Le code vise
+Windows PowerShell 5.1. Le rendu WPF, les appels de console, le raccourci COM
+et la zone de notification nécessitent une validation sur Windows réel.
+Le diagnostic fourni vérifie la construction et la mesure WPF, ainsi que
+la lecture des données. La console, le raccourci et la zone de notification
+se vérifient au lancement normal sous Windows.

@@ -1,0 +1,25 @@
+﻿LOGOS DES FOURNISSEURS — SOURCES OFFICIELLES
+
+Ces marques servent uniquement à identifier le service sélectionné. Elles
+restent la propriété de leurs titulaires ; ce widget est indépendant.
+
+CODEX
+Codex.png est une copie inchangée du PNG officiel OpenAI (Blossom), 180 × 180.
+Ce fichier représente OpenAI, fournisseur de Codex. Aucun symbole propre à
+Codex n'est revendiqué pour cette image.
+Page de référence : https://openai.com/codex/
+Image officielle : https://openai.com/apple-icon.png?apple-icon.3o0tf8iy4mx7y.png
+Original SVG également conservé : https://openai.com/favicon.svg
+Directives : https://openai.com/brand/
+Le SVG de favicon contient des variables CSS et des variantes clair/sombre ;
+le PNG officiel est utilisé pour éviter les différences de rendu des moteurs.
+
+CLAUDE
+Claude.png est la version rasterisée du SVG officiel, 192 × 192, transparent.
+La forme, les proportions et la couleur terracotta d'origine sont préservées.
+Page : https://claude.com/
+SVG original : https://claude.com/icon.svg
+PNG officiel également conservé : https://claude.com/icon.png
+
+Aucun logo n'a été inventé ou généré par IA. Les fichiers *.original.*
+conservent les octets téléchargés ; provenance.json indique les traitements.
