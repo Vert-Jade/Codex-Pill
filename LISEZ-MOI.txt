@@ -28,7 +28,20 @@ Clique sur la pastille. Le panneau propose deux choix :
 Tu peux aussi choisir dans l'icône de notification : clic droit > Suivi.
 Le choix est mémorisé. Les mesures des deux fournisseurs ne sont jamais
 additionnées ou mélangées. Les pourcentages affichent la part RESTANTE :
-les jauges se vident à l'usage (orange sous 25 %, rouge sous 10 %).
+les anneaux se vident à l'usage. Pour les deux IA : jaune sous 25 %, rouge
+vif sous 10 % (anneau lumineux et nombre en rouge).
+
+LA PASTILLE
+
+La pastille est un rond à la couleur de l'IA suivie (bleu électrique pour
+Codex, terracotta pour Claude). Le pourcentage restant est au centre, la durée de la
+fenêtre (5 H ou 7 J) juste en dessous, et l'anneau se vide à l'usage.
+Quand l'IA fournit deux limites, comme Claude (session de 5 h et semaine),
+deux ronds accolés forment un « 8 » : 5 h à gauche, 7 j à droite.
+Un petit point n'apparaît sur le rond que s'il y a quelque chose à signaler
+(mesure ancienne, attente, erreur). Survoler la pastille affiche le détail.
+Clic droit > Taille normale, Grande taille ou Très grande taille : choisir la
+taille de la pastille (grande par défaut, choix mémorisé).
 
 CODEX
 
@@ -50,8 +63,11 @@ consommation du compte : extension VS Code, terminal, site web et mobile.
 
 Le widget utilise la connexion déjà enregistrée par Claude Code sur ce PC
 (<dossier Claude>\.credentials.json). Elle est relue à chaque fois, envoyée
-uniquement à api.anthropic.com, jamais copiée ni renouvelée par le widget.
-Si elle expire, ouvre Claude Code : le suivi reprend tout seul.
+uniquement à Anthropic, jamais copiée ailleurs ni journalisée.
+L'application de bureau Claude a sa propre connexion et ne met pas ce fichier
+à jour. Quand son jeton expire, le widget le renouvelle comme une nouvelle
+session Claude Code (mêmes verrous, sans écraser un renouvellement fait par
+Claude Code). Inutile de redémarrer Claude.
 
 L'activité récente liste les dernières conversations Claude Code de ce PC
 (projet, modèle). Si le dossier d'un projet contient une icône d'application

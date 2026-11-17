@@ -32,7 +32,10 @@ savoir ce qu'il vous reste et quand le compteur repart à zéro.
 
 ## Fonctionnalités
 
-- **La part restante, pas la part consommée** : les jauges se vident à mesure que vous
+- **Une pastille ronde et discrète** : un rond à la couleur de l'IA suivie, avec le
+  pourcentage restant au centre. Quand l'IA a deux limites (Claude : 5 h et 7 j), deux
+  ronds accolés forment un « 8 ». Trois tailles au choix depuis le clic droit.
+- **La part restante, pas la part consommée** : les anneaux se vident à mesure que vous
   utilisez l'IA, comme une batterie.
 - **Codex et Claude** : passez de l'un à l'autre d'un clic. Les mesures ne sont jamais
   mélangées.
@@ -40,8 +43,8 @@ savoir ce qu'il vous reste et quand le compteur repart à zéro.
   couvrent l'extension VS Code, le terminal, le site et le mobile.
 - **Réinitialisation lisible** : compte à rebours et heure exacte (« dans 2 h 14 ·
   à 19:50 »).
-- **Alertes visuelles** : la couleur de l'IA suivie en temps normal, orange sous 25 %,
-  rouge sous 10 %.
+- **Alertes visuelles** : la couleur de l'IA suivie en temps normal, jaune sous 25 %,
+  rouge vif sous 10 % (anneau lumineux et nombre en rouge). Mêmes seuils pour les deux IA.
 - **Activité récente** : les derniers projets utilisés, avec leur modèle ou leurs tokens.
   L'icône de l'application s'affiche quand le projet en possède une.
 - **Discret** : déplaçable, toujours au premier plan si vous le souhaitez, réductible
@@ -55,13 +58,14 @@ savoir ce qu'il vous reste et quand le compteur repart à zéro.
 
 ![Panneau Codex et panneau Claude côte à côte](docs/fournisseurs.png)
 
-*Chaque IA garde son identité : jade pour Codex, terracotta pour Claude.*
+*Chaque IA garde son identité : bleu électrique pour Codex, terracotta pour Claude.*
 
 <br>
 
 ![Les trois états de la pastille](docs/etats.png)
 
-*La pastille change de couleur quand un quota devient bas.*
+*Un rond pour une seule limite, un « 8 » pour deux. L'anneau change de couleur quand un
+quota devient bas.*
 
 </div>
 
@@ -86,7 +90,8 @@ savoir ce qu'il vous reste et quand le compteur repart à zéro.
 | --- | --- |
 | **Clic** sur la pastille | Ouvre le panneau de détails |
 | **Glisser** | Déplace la pastille (position mémorisée) |
-| **Clic droit** | Menu : premier plan, démarrage avec Windows, dossier des données… |
+| **Survol** | Affiche le détail des quotas et l'heure de réinitialisation |
+| **Clic droit** | Menu : taille de la pastille, premier plan, démarrage avec Windows… |
 | **Bouton –** du panneau | Réduit dans la zone de notification ; le suivi continue |
 | **Double-clic** sur l'icône de notification | Réaffiche la pastille |
 | **Échap** | Ferme le panneau |
@@ -110,9 +115,12 @@ pour cela la connexion déjà enregistrée par Claude Code sur ce PC
 (`%USERPROFILE%\.claude\.credentials.json`) :
 
 - le jeton est relu à chaque fois et n'est **jamais copié, journalisé ni affiché** ;
-- il n'est envoyé **qu'à `api.anthropic.com`**, en HTTPS ;
-- le widget **ne renouvelle jamais** la connexion. Si elle expire, il suffit d'ouvrir
-  Claude Code.
+- il n'est envoyé **qu'à Anthropic** (`api.anthropic.com`, et `platform.claude.com` pour
+  le renouvellement), en HTTPS ;
+- l'application de bureau Claude utilise sa propre connexion et ne met pas ce fichier à
+  jour. Quand le jeton du fichier a expiré, le widget le **renouvelle comme le ferait une
+  nouvelle session Claude Code** : mêmes verrous, et aucune écriture si Claude Code l'a
+  renouvelé entre-temps. Les sessions en cours ne sont pas interrompues.
 
 L'activité récente est tirée des conversations Claude Code locales. Seuls le dossier du
 projet, l'heure et le nom du modèle sont utilisés ; le contenu des messages n'est jamais

@@ -18,11 +18,33 @@ Le widget réutilise la connexion enregistrée par Claude Code sur ce PC :
 
 - Le jeton est relu à chaque interrogation ; il n'est jamais copié, journalisé
   ni affiché.
-- Il est envoyé uniquement à api.anthropic.com, en HTTPS.
-- Le widget ne renouvelle jamais la connexion : cela pourrait déconnecter
-  Claude Code. Si elle a expiré, ouvrir Claude Code suffit à la renouveler,
-  puis le suivi reprend tout seul.
+- Il est envoyé uniquement à Anthropic, en HTTPS : api.anthropic.com pour
+  l'usage, platform.claude.com pour le renouvellement.
 - Après un refus pour excès de demandes, le widget attend cinq minutes.
+
+RENOUVELLEMENT DE LA CONNEXION
+
+Ce fichier n'est mis à jour que par Claude Code dans VS Code ou le terminal.
+L'application de bureau Claude lance ses propres sessions avec sa propre
+connexion et ne le touche pas. Après plus de 8 heures sans session VS Code ou
+terminal, le jeton du fichier expire alors que Claude continue de travailler.
+
+Dans ce cas, le widget renouvelle le jeton exactement comme le ferait une
+nouvelle session Claude Code (protocole relevé dans Claude Code 2.1.322) :
+- uniquement quand le jeton a expiré, ou s'il vient d'être refusé ;
+- sous les deux verrous de Claude Code (<dossier Claude>\.oauth_refresh.lock
+  et <dossier Claude>.lock) ; un verrou déjà pris n'est jamais repris, le
+  widget réessaie simplement plus tard ;
+- demande envoyée à https://platform.claude.com/v1/oauth/token avec
+  l'identifiant client de Claude Code ;
+- écriture atomique, seulement si personne n'a renouvelé entre-temps ; tous
+  les autres champs du fichier sont conservés ;
+- en cas d'échec, nouvel essai après 2 minutes ; après une limitation ou un
+  refus du serveur, après 10 minutes.
+
+Les sessions en cours (application de bureau, VS Code) ne sont pas
+interrompues. Si le serveur refuse le renouvellement, la connexion VS Code
+n'est plus valide : taper /login dans Claude Code (VS Code ou terminal).
 
 Ce service n'est pas documenté publiquement par Anthropic. S'il change, le
 widget affiche « en attente » ; il n'invente jamais de valeur.

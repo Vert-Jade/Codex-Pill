@@ -132,5 +132,70 @@ try {
     [IO.File]::WriteAllText((Join-Path $transcriptDirectory 'session-a.jsonl'), $line + "`n", [Text.UTF8Encoding]::new($false))
     $activity = @(Get-ClaudePillTranscriptActivity $apiHome)
     Assert-CLPTest ($activity.Count -eq 1 -and $activity[0].Project -eq 'Démo Café' -and $activity[0].Detail -eq 'Opus 5.5') 'L''activité récente vient des conversations locales.'
+
+    # --- Renouvellement du jeton expiré, serveur simulé (aucun réseau) ---
+    $refreshHome = Join-Path (Join-Path $fixtureRoot 'profil test') '.claude'
+    [void][IO.Directory]::CreateDirectory($refreshHome)
+    $credentialPath = Join-Path $refreshHome '.credentials.json'
+    function Write-TestCredential([long]$ExpiresAt, [string]$Access = 'ancien-acces', [string]$Refresh = 'ancien-renouv') {
+        $value = [ordered]@{ claudeAiOauth = [ordered]@{ accessToken = $Access; refreshToken = $Refresh; expiresAt = $ExpiresAt; refreshTokenExpiresAt = 1796465910733; scopes = @('user:inference', 'user:profile'); subscriptionType = 'max'; rateLimitTier = 'default_claude_max_5x' }; organizationUuid = 'org-test'; mcpOAuth = [ordered]@{ serveur = [ordered]@{ accessToken = 'mcp-garde' } } }
+        [IO.File]::WriteAllText($credentialPath, ($value | ConvertTo-Json -Depth 8 -Compress), [Text.UTF8Encoding]::new($false))
+    }
+    function Read-TestCredential { return ([IO.File]::ReadAllText($credentialPath) | ConvertFrom-Json) }
+    $script:tokenCalls = 0; $script:lastTokenBody = $null; $script:tokenStatus = 200; $script:onTokenRequest = $null
+    function Invoke-ClaudePillTokenRequest {
+        param([hashtable]$Body)
+        $script:tokenCalls++; $script:lastTokenBody = $Body
+        if ($null -ne $script:onTokenRequest) { & $script:onTokenRequest }
+        if ($script:tokenStatus -ne 200) { return [pscustomobject]@{ StatusCode = $script:tokenStatus; Body = $null } }
+        return [pscustomobject]@{ StatusCode = 200; Body = [pscustomobject]@{ access_token = 'nouvel-acces'; refresh_token = 'nouveau-renouv'; expires_in = 28800; scope = 'user:inference user:profile' } }
+    }
+    $expiredMs = [DateTimeOffset]::UtcNow.AddMinutes(-30).ToUnixTimeMilliseconds()
+    Write-TestCredential $expiredMs
+    $outcome = Invoke-ClaudePillTokenRefresh -ClaudeHome $refreshHome
+    $saved = Read-TestCredential
+    Assert-CLPTest ($outcome -eq 'Refreshed' -and $saved.claudeAiOauth.accessToken -eq 'nouvel-acces' -and $saved.claudeAiOauth.refreshToken -eq 'nouveau-renouv' -and $saved.claudeAiOauth.expiresAt -gt [DateTimeOffset]::UtcNow.AddHours(7).ToUnixTimeMilliseconds()) 'Un jeton expiré est renouvelé et enregistré.'
+    Assert-CLPTest ($script:lastTokenBody.grant_type -eq 'refresh_token' -and $script:lastTokenBody.refresh_token -eq 'ancien-renouv' -and $script:lastTokenBody.client_id -eq '9d1c250a-e61b-44d9-88ed-5944d1962f5e' -and $script:lastTokenBody.scope -eq 'user:inference user:profile') 'La demande reprend exactement le format de Claude Code.'
+    Assert-CLPTest ($saved.organizationUuid -eq 'org-test' -and $saved.mcpOAuth.serveur.accessToken -eq 'mcp-garde' -and $saved.claudeAiOauth.subscriptionType -eq 'max' -and $saved.claudeAiOauth.refreshTokenExpiresAt -eq 1796465910733 -and @($saved.claudeAiOauth.scopes).Count -eq 2) 'Tous les autres champs de connexion sont conservés.'
+    $rawBytes = [IO.File]::ReadAllBytes($credentialPath)
+    Assert-CLPTest ($rawBytes[0] -eq [byte][char]'{' -and -not [IO.Directory]::Exists((Join-Path $refreshHome '.oauth_refresh.lock')) -and -not [IO.Directory]::Exists($refreshHome + '.lock')) 'Fichier sans BOM et verrous libérés après le renouvellement.'
+    $script:tokenCalls = 0
+    $outcome = Invoke-ClaudePillTokenRefresh -ClaudeHome $refreshHome
+    Assert-CLPTest ($outcome -eq 'AlreadyFresh' -and $script:tokenCalls -eq 0) 'Un jeton encore valide n''est jamais renouvelé.'
+    Write-TestCredential $expiredMs
+    [void][IO.Directory]::CreateDirectory((Join-Path $refreshHome '.oauth_refresh.lock'))
+    $outcome = Invoke-ClaudePillTokenRefresh -ClaudeHome $refreshHome
+    Assert-CLPTest ($outcome -eq 'Busy' -and $script:tokenCalls -eq 0 -and (Read-TestCredential).claudeAiOauth.accessToken -eq 'ancien-acces' -and -not [IO.Directory]::Exists($refreshHome + '.lock')) 'Le verrou d''une session Claude Code est respecté, jamais repris.'
+    [IO.Directory]::Delete((Join-Path $refreshHome '.oauth_refresh.lock'))
+    [void][IO.Directory]::CreateDirectory($refreshHome + '.lock')
+    $outcome = Invoke-ClaudePillTokenRefresh -ClaudeHome $refreshHome
+    Assert-CLPTest ($outcome -eq 'Busy' -and $script:tokenCalls -eq 0 -and -not [IO.Directory]::Exists((Join-Path $refreshHome '.oauth_refresh.lock'))) 'L''ancien verrou de Claude Code est aussi respecté.'
+    [IO.Directory]::Delete($refreshHome + '.lock')
+    $script:onTokenRequest = { Write-TestCredential ([DateTimeOffset]::UtcNow.AddHours(8).ToUnixTimeMilliseconds()) 'acces-autre-session' 'renouv-autre-session' }
+    $outcome = Invoke-ClaudePillTokenRefresh -ClaudeHome $refreshHome
+    $script:onTokenRequest = $null
+    Assert-CLPTest ($outcome -eq 'AlreadyFresh' -and (Read-TestCredential).claudeAiOauth.accessToken -eq 'acces-autre-session') 'Un renouvellement simultané par Claude Code n''est jamais écrasé.'
+    Write-TestCredential $expiredMs
+    $script:tokenStatus = 400
+    $outcome = Invoke-ClaudePillTokenRefresh -ClaudeHome $refreshHome
+    Assert-CLPTest ($outcome -eq 'Rejected' -and (Read-TestCredential).claudeAiOauth.accessToken -eq 'ancien-acces') 'Un refus du serveur laisse le fichier intact.'
+    $script:tokenStatus = 429
+    $limitedReader = New-ClaudePillReader -ClaudeHome $refreshHome
+    Update-ClaudePillReader $limitedReader -ForceScan
+    Assert-CLPTest ($limitedReader.LastRefreshOutcome -eq 'RateLimited' -and $limitedReader.RefreshRetryAfter -gt [DateTimeOffset]::UtcNow.AddMinutes(9) -and (Read-TestCredential).claudeAiOauth.accessToken -eq 'ancien-acces') 'Une limitation du serveur espace les essais de 10 minutes.'
+    $script:tokenStatus = 200
+    function Invoke-ClaudePillUsageRequest {
+        param([string]$Token)
+        if ($Token -ne 'nouvel-acces') { return [pscustomobject]@{ StatusCode = 401; Body = $null } }
+        return [pscustomobject]@{ StatusCode = 200; Body = [pscustomobject]@{ five_hour = [pscustomobject]@{ utilization = 22; resets_at = [DateTimeOffset]::UtcNow.AddHours(2).ToString('o') }; seven_day = [pscustomobject]@{ utilization = 15; resets_at = [DateTimeOffset]::UtcNow.AddDays(3).ToString('o') } } }
+    }
+    $liveReader = New-ClaudePillReader -ClaudeHome $refreshHome
+    Update-ClaudePillReader $liveReader -ForceScan
+    $liveSnapshot = Get-ClaudePillSnapshot $liveReader
+    Assert-CLPTest ($liveSnapshot.Status -eq 'Ready' -and $liveSnapshot.Primary.RemainingPercent -eq 78 -and $liveReader.LastRefreshOutcome -eq 'Refreshed') 'Le suivi reprend seul quand le jeton du fichier a expiré.'
+    Write-TestCredential ([DateTimeOffset]::UtcNow.AddHours(4).ToUnixTimeMilliseconds()) 'revoque' 'ancien-renouv'
+    $revokedReader = New-ClaudePillReader -ClaudeHome $refreshHome
+    Update-ClaudePillReader $revokedReader -ForceScan
+    Assert-CLPTest ((Get-ClaudePillSnapshot $revokedReader).Status -eq 'Ready' -and (Read-TestCredential).claudeAiOauth.accessToken -eq 'nouvel-acces') 'Un jeton refusé avant échéance est renouvelé une fois.'
     Write-Output ($testCount.ToString() + ' Claude checks passed.')
 } finally { if ([IO.Directory]::Exists($fixtureRoot)) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force } }

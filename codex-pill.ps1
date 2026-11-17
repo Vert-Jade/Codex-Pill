@@ -51,11 +51,11 @@ function Write-PillLog {
 }
 
 function Read-PillSettings {
-    $settingsObject = @{ Left = $null; Top = $null; Topmost = $true; HideConsole = $true; Provider = 'Codex'; Opacity = 0.94; CodexHomePath = ''; ClaudeHomePath = '' }
+    $settingsObject = @{ Left = $null; Top = $null; Right = $null; Topmost = $true; HideConsole = $true; Provider = 'Codex'; Opacity = 0.94; Scale = 1.35; CodexHomePath = ''; ClaudeHomePath = '' }
     if (Test-Path -LiteralPath $script:PillSettingsPath) {
         try {
             $savedObject = Get-Content -LiteralPath $script:PillSettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
-            foreach ($coordinateName in @('Left','Top')) {
+            foreach ($coordinateName in @('Left','Top','Right')) {
                 if ($null -ne $savedObject.$coordinateName) {
                     $coordinateValue = [double]$savedObject.$coordinateName
                     if (-not [double]::IsNaN($coordinateValue) -and -not [double]::IsInfinity($coordinateValue)) { $settingsObject[$coordinateName] = $coordinateValue }
@@ -64,6 +64,7 @@ function Read-PillSettings {
             if ($savedObject.Topmost -is [bool]) { $settingsObject.Topmost = $savedObject.Topmost }
             if ($savedObject.HideConsole -is [bool]) { $settingsObject.HideConsole = $savedObject.HideConsole }
             if ($null -ne $savedObject.Opacity) { $settingsObject.Opacity = [Math]::Max(0.65, [Math]::Min(1, [double]$savedObject.Opacity)) }
+            if ($null -ne $savedObject.Scale) { $settingsObject.Scale = [Math]::Max(0.8, [Math]::Min(2.5, [double]$savedObject.Scale)) }
             if ($savedObject.CodexHomePath -is [string]) { $settingsObject.CodexHomePath = $savedObject.CodexHomePath }
             if ($savedObject.ClaudeHomePath -is [string]) { $settingsObject.ClaudeHomePath = $savedObject.ClaudeHomePath }
             if ($savedObject.Provider -in @('Codex','Claude')) { $settingsObject.Provider = [string]$savedObject.Provider }
@@ -89,6 +90,9 @@ function Save-PillSettings {
         if ($null -ne $script:PillUi) {
             $script:PillSettings.Left = $script:PillUi.Main.Left
             $script:PillSettings.Top = $script:PillUi.Main.Top
+            # Bord droit : sert à garder en place une pastille rangée à droite, dont la
+            # largeur change (un rond ou deux) entre l'attente et l'arrivée des données.
+            if ($script:PillUi.Main.ActualWidth -gt 0) { $script:PillSettings.Right = $script:PillUi.Main.Left + $script:PillUi.Main.ActualWidth }
             $script:PillSettings.Topmost = $script:PillUi.Main.Topmost
         }
         Write-PillJsonAtomic $script:PillSettingsPath $script:PillSettings

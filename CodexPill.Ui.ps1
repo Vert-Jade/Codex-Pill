@@ -30,38 +30,37 @@ function New-PillUi {
  <Style TargetType="ScrollBar"><Setter Property="Width" Value="6"/><Setter Property="MinWidth" Value="6"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar"><Track x:Name="PART_Track" IsDirectionReversed="True"><Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="#3A3C44" CornerRadius="3"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb></Track></ControlTemplate></Setter.Value></Setter></Style>
 </ResourceDictionary>
 '@
-    # Gabarit d'une jauge de la pastille : libellé, valeur, barre, échéance.
+    # Gabarit d'un rond de la pastille : anneau de la part restante, valeur au centre,
+    # durée de la fenêtre en dessous. Dimensions liées à Set-PillShape (52 px, pas de 48 px).
     $pillMeterXaml = @'
-   <Grid x:Name="{P}Group" Grid.Column="{C}" Width="104" Margin="{M}" VerticalAlignment="Center">
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="4"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <TextBlock VerticalAlignment="Bottom" Margin="0,0,0,3" FontSize="9.5"><Run x:Name="{P}Label" Text="5 H" FontWeight="SemiBold" Foreground="#A3A7B1"/><Run Text=" restant" Foreground="#6E727D"/></TextBlock>
-    <TextBlock HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,1" FontFamily="{StaticResource DisplayFont}"><Run x:Name="{P}ValueNumber" Text="—" FontSize="17" FontWeight="SemiBold"/><Run x:Name="{P}ValueUnit" Text=" %" FontSize="10.5" Foreground="#8D919B"/></TextBlock>
-    <Border Grid.Row="1" Background="#2A2C32" CornerRadius="2"/>
-    <Border x:Name="{P}Bar" Grid.Row="1" Width="0" HorizontalAlignment="Left" CornerRadius="2" Background="#6FD6B0"/>
-    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,5,0,0">
-     <Grid Width="9" Height="9" Margin="0,0,4,0" VerticalAlignment="Center"><Ellipse Stroke="#6E727D" StrokeThickness="1"/><Path Data="M 4.5 2.3 L 4.5 4.7 L 6.2 5.7" Stroke="#6E727D" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Grid>
-     <TextBlock x:Name="{P}Hint" Text="—" FontSize="9.5" Foreground="#7C808B"/>
+   <Grid x:Name="{P}Group" Width="52" Height="52" Margin="{M}">
+    <Ellipse Width="44" Height="44" Stroke="#2A2C32" StrokeThickness="4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Path x:Name="{P}PillRing" Width="44" Height="44" StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="#1E90FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,1,0,0">
+     <TextBlock HorizontalAlignment="Center" FontFamily="{StaticResource DisplayFont}"><Run x:Name="{P}ValueNumber" Text="—" FontSize="14" FontWeight="SemiBold"/><Run x:Name="{P}ValueUnit" Text="" FontSize="8" Foreground="#8D919B"/></TextBlock>
+     <TextBlock x:Name="{P}Label" Text="" FontSize="7.5" FontWeight="SemiBold" Foreground="#7C808B" HorizontalAlignment="Center" Margin="0,-3,0,0"/>
     </StackPanel>
    </Grid>
 '@
+    # La pastille est un rond (une seule fenêtre de quota) ou un « 8 » horizontal
+    # (session 5 h et semaine). Sa silhouette est calculée par Set-PillShape.
     $mainXaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Codex Pill" WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" SizeToContent="WidthAndHeight" UseLayoutRounding="True" SnapsToDevicePixels="True">
  <!-- RESOURCES -->
- <Border x:Name="PillSurface" Margin="16" CornerRadius="15" BorderThickness="1" Padding="8,8,14,8" Opacity="0.94" Cursor="Hand" ToolTipService.InitialShowDelay="500" AutomationProperties.Name="Quotas restants. Cliquer pour les détails, faire glisser pour déplacer.">
-  <Border.BorderBrush><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#3B3D45" Offset="0"/><GradientStop Color="#25262B" Offset="1"/></LinearGradientBrush></Border.BorderBrush>
-  <Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#1F2025" Offset="0"/><GradientStop Color="#16171A" Offset="1"/></LinearGradientBrush></Border.Background>
-  <Border.Effect><DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="5" Direction="270" Opacity="0.38"/></Border.Effect>
-  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <Grid Width="38" Height="38" VerticalAlignment="Center">
-    <Border x:Name="PillLogoTile" CornerRadius="11" Background="#24262C" BorderBrush="#30323A" BorderThickness="1"/>
-    <Path x:Name="PillProviderLogo" Width="19" Height="19" Stretch="Uniform" Fill="#F2F3F5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    <Ellipse x:Name="StatusDot" Width="9" Height="9" Fill="#7E818B" Stroke="#18191C" StrokeThickness="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0"/>
-   </Grid>
+ <Grid><Grid.LayoutTransform><ScaleTransform x:Name="PillScale" ScaleX="1" ScaleY="1"/></Grid.LayoutTransform>
+ <Grid x:Name="PillSurface" Margin="16" Opacity="0.94" Cursor="Hand" ToolTipService.InitialShowDelay="500" AutomationProperties.Name="Quotas restants. Cliquer pour les détails, faire glisser pour déplacer.">
+  <Path x:Name="PillShape" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top">
+   <Path.Stroke><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#3B3D45" Offset="0"/><GradientStop Color="#25262B" Offset="1"/></LinearGradientBrush></Path.Stroke>
+   <Path.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#1F2025" Offset="0"/><GradientStop Color="#16171A" Offset="1"/></LinearGradientBrush></Path.Fill>
+   <Path.Effect><DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.4"/></Path.Effect>
+  </Path>
+  <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top">
    <!-- PRIMARY -->
-   <Border x:Name="SecondaryDivider" Grid.Column="2" Background="#2A2B31" Width="1" Margin="0,4"/>
    <!-- SECONDARY -->
-  </Grid>
- </Border>
+  </StackPanel>
+  <Ellipse x:Name="StatusDot" Width="9" Height="9" Fill="#7E818B" Stroke="#18191C" StrokeThickness="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,3,3,0" Visibility="Collapsed" IsHitTestVisible="False"/>
+ </Grid>
+ </Grid>
 </Window>
 '@
     # Gabarit d'une carte du panneau : anneau, titre, échéance.
@@ -70,7 +69,7 @@ function New-PillUi {
       <StackPanel>
        <Grid Width="96" Height="96" HorizontalAlignment="Center">
         <Ellipse Stroke="#292B31" StrokeThickness="8" Margin="0"/>
-        <Path x:Name="{P}Ring" Width="96" Height="96" StrokeThickness="8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="#6FD6B0"/>
+        <Path x:Name="{P}Ring" Width="96" Height="96" StrokeThickness="8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="#1E90FF"/>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,0">
          <TextBlock HorizontalAlignment="Center" FontFamily="{StaticResource DisplayFont}"><Run x:Name="{P}BigNumber" Text="—" FontSize="25" FontWeight="SemiBold"/><Run x:Name="{P}BigUnit" Text=" %" FontSize="12" Foreground="#8D919B"/></TextBlock>
          <TextBlock Text="restant" FontSize="10" Foreground="#7C808B" HorizontalAlignment="Center" Margin="0,-1,0,0"/>
@@ -96,7 +95,7 @@ function New-PillUi {
      <Border Width="34" Height="34" CornerRadius="10" Background="#202127" BorderBrush="#2E3037" BorderThickness="1" VerticalAlignment="Center"><Image x:Name="DetailLogo" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/></Border>
      <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
       <TextBlock Text="Codex Pill" FontSize="14.5" FontWeight="SemiBold" FontFamily="{StaticResource DisplayFont}"/>
-      <StackPanel Orientation="Horizontal" Margin="0,3,0,0"><Ellipse x:Name="DetailStatusDot" Width="6" Height="6" Fill="#6FD6B0" VerticalAlignment="Center" Margin="0,1,6,0"/><TextBlock x:Name="StatusText" Text="Lecture des données…" FontSize="11" Foreground="#9296A0" TextTrimming="CharacterEllipsis"/></StackPanel>
+      <StackPanel Orientation="Horizontal" Margin="0,3,0,0"><Ellipse x:Name="DetailStatusDot" Width="6" Height="6" Fill="#4FD18B" VerticalAlignment="Center" Margin="0,1,6,0"/><TextBlock x:Name="StatusText" Text="Lecture des données…" FontSize="11" Foreground="#9296A0" TextTrimming="CharacterEllipsis"/></StackPanel>
      </StackPanel>
      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
       <Button x:Name="HideWidgetButton" Width="28" Height="28" Padding="0" Margin="0,0,2,0" Style="{StaticResource QuietButton}" ToolTip="Réduire dans la zone de notification" AutomationProperties.Name="Réduire dans la zone de notification"><Path Width="10" Height="10" Data="M 1 5 L 9 5" Stretch="None" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
@@ -132,8 +131,9 @@ function New-PillUi {
  </Border>
 </Window>
 '@
-    $primaryMeter = $pillMeterXaml.Replace('{P}', 'Primary').Replace('{C}', '1').Replace('{M}', '12,0,12,0')
-    $secondaryMeter = $pillMeterXaml.Replace('{P}', 'Secondary').Replace('{C}', '3').Replace('{M}', '12,0,0,0')
+    # Le second rond chevauche le premier de 4 px : les deux disques se fondent en « 8 ».
+    $primaryMeter = $pillMeterXaml.Replace('{P}', 'Primary').Replace('{M}', '0')
+    $secondaryMeter = $pillMeterXaml.Replace('{P}', 'Secondary').Replace('{M}', '-4,0,0,0')
     $primaryCard = $cardXaml.Replace('{P}', 'Primary').Replace('{C}', '0').Replace('{M}', '0,0,5,0')
     $secondaryCard = $cardXaml.Replace('{P}', 'Secondary').Replace('{C}', '1').Replace('{M}', '5,0,0,0')
     $resourceBlock = '<Window.Resources>' + $resourcesXaml + '</Window.Resources>'
@@ -143,14 +143,14 @@ function New-PillUi {
     $detailWindow = [System.Windows.Markup.XamlReader]::Parse($detailMarkup)
     $view = @{
         Main = $mainWindow; Detail = $detailWindow; Controls = @{}; ActivitySignature = ''
-        Theme = @{ Text = '#F2F3F5'; Muted = '#8D919B'; Quiet = '#5E626C'; Good = '#6FD6B0'; Accent = '#6FD6B0'; Live = '#4FD18B'; Warning = '#F2B45C'; Danger = '#F27474' }
-        Accents = @{ Codex = '#6FD6B0'; Claude = '#E0896B' }
+        Theme = @{ Text = '#F2F3F5'; Muted = '#8D919B'; Quiet = '#5E626C'; Good = '#1E90FF'; Accent = '#1E90FF'; Live = '#4FD18B'; Warning = '#FFC93C'; Danger = '#FF3B3B' }
+        Accents = @{ Codex = '#1E90FF'; Claude = '#E0896B' }
     }
-    foreach ($controlName in @('PillSurface','PillLogoTile','PillProviderLogo','StatusDot','SecondaryDivider')) {
+    foreach ($controlName in @('PillScale','PillSurface','PillShape','StatusDot')) {
         $view.Controls[$controlName] = $mainWindow.FindName($controlName)
     }
     foreach ($prefix in @('Primary','Secondary')) {
-        foreach ($suffix in @('Group','Label','ValueNumber','ValueUnit','Bar','Hint')) { $view.Controls[$prefix + $suffix] = $mainWindow.FindName($prefix + $suffix) }
+        foreach ($suffix in @('Group','Label','ValueNumber','ValueUnit','PillRing')) { $view.Controls[$prefix + $suffix] = $mainWindow.FindName($prefix + $suffix) }
         foreach ($suffix in @('Card','Ring','BigNumber','BigUnit','Title','Reset','Remaining')) { $view.Controls[$prefix + $suffix] = $detailWindow.FindName($prefix + $suffix) }
     }
     foreach ($controlName in @('DetailSurface','DetailShift','DetailScroll','DetailHeader','DetailLogo','HideWidgetButton','CloseDetailButton','CodexOption','ClaudeOption','CodexChoiceLogo','ClaudeChoiceLogo','PlanBadge','PlanText','ClaudeSetupPanel','ClaudeSetupText','EnableClaudeButton','DetailStatusDot','StatusText','NoticePanel','NoticeText','CardsGrid','SecondaryColumn','ActivityRows','ActivityNote','SourceLabel','VersionLabel','RefreshButton')) {
@@ -191,7 +191,39 @@ function New-PillUi {
             }
         } catch { Write-PillLog $_ }
     }
+    Set-PillShape $view.Controls.PillShape -Double $true
     return $view
+}
+
+function Set-PillShape {
+    param($PathElement, [bool]$Double)
+    # Silhouette de la pastille : un disque de 52 px, ou deux disques espacés de
+    # 48 px réunis en un seul contour (le « 8 » horizontal). Le contour de 1 px est
+    # décalé d'un demi-pixel pour rester net.
+    $discRadius = 25.5
+    $firstDisc = [Windows.Media.EllipseGeometry]::new([Windows.Point]::new(26, 26), $discRadius, $discRadius)
+    $shapeGeometry = $firstDisc
+    if ($Double) {
+        $secondDisc = [Windows.Media.EllipseGeometry]::new([Windows.Point]::new(74, 26), $discRadius, $discRadius)
+        $shapeGeometry = [Windows.Media.CombinedGeometry]::new([Windows.Media.GeometryCombineMode]::Union, $firstDisc, $secondDisc)
+    }
+    $shapeGeometry.Freeze()
+    $PathElement.Data = $shapeGeometry
+}
+
+function Get-PillScale {
+    $scaleValue = 1.35
+    if ($null -ne $script:PillSettings -and $null -ne $script:PillSettings.Scale) { $scaleValue = [Math]::Max(0.8, [Math]::Min(2.5, [double]$script:PillSettings.Scale)) }
+    return $scaleValue
+}
+
+function Set-PillScale {
+    param([double]$Scale)
+    # Agrandissement vectoriel de toute la pastille (ombre comprise) : le rendu reste net.
+    $script:PillSettings.Scale = $Scale
+    $script:PillUi.Controls.PillScale.ScaleX = $Scale
+    $script:PillUi.Controls.PillScale.ScaleY = $Scale
+    foreach ($sizeEntry in @($script:PillUi.Controls.SizeMenus)) { if ($null -ne $sizeEntry) { $sizeEntry.IsChecked = [Math]::Abs([double]$sizeEntry.Tag - $Scale) -lt 0.01 } }
 }
 
 function Get-PillAccent {
@@ -206,8 +238,6 @@ function Update-PillProviderControls {
     $isClaude = $providerName -eq 'Claude'
     $viewControls = $script:PillUi.Controls
     $script:PillUi.Theme.Accent = Get-PillAccent
-    if ($script:PillUi.ProviderLogos.ContainsKey($providerName)) { $viewControls.PillProviderLogo.Data = $script:PillUi.ProviderLogos[$providerName] }
-    $viewControls.PillProviderLogo.Fill = Get-PillBrush $(if ($isClaude) { $script:PillUi.Accents.Claude } else { '#F2F3F5' })
     [Windows.Automation.AutomationProperties]::SetName($viewControls.PillSurface, ('Quotas restants ' + $providerName + '. Cliquer pour les détails, faire glisser pour déplacer.'))
     $viewControls.CodexOption.IsChecked = -not $isClaude
     $viewControls.ClaudeOption.IsChecked = $isClaude
@@ -275,16 +305,16 @@ function Set-PillMeter {
     param([string]$Prefix, $WindowData, [string]$Fallback)
     $viewControls = $script:PillUi.Controls
     $windowState = Get-PillWindowState $WindowData
-    $viewControls[$Prefix + 'Label'].Text = Format-PillWindow $WindowData $Fallback -Short
+    # Sous le nombre du rond : durée courte (« 5 H », « 7 J »), rien tant qu'elle est inconnue.
+    $viewControls[$Prefix + 'Label'].Text = Format-PillWindow $WindowData '' -Short
+    $viewControls[$Prefix + 'Label'].Visibility = if ($viewControls[$Prefix + 'Label'].Text) { 'Visible' } else { 'Collapsed' }
     $viewControls[$Prefix + 'Title'].Text = Format-PillWindow $WindowData $Fallback
-    $numberText = '—'; $unitText = ''; $remainingFraction = 0.0
+    $numberText = '—'; $unitText = ''; $remainingFraction = 0.0; $isCritical = $false
     $meterColor = $script:PillUi.Theme.Quiet
-    $hintText = 'en attente'
     $resetText = "En attente d’une mesure"
     $detailText = ''
     $viewControls[$Prefix + 'Card'].ToolTip = $null
     if ($windowState -eq 'Expired') {
-        $hintText = 'à confirmer'
         $resetText = 'Échéance passée'
         $detailText = "Attente d’une nouvelle mesure"
     } elseif ($windowState -ne 'Missing') {
@@ -294,7 +324,8 @@ function Set-PillMeter {
         $numberText = '{0:0}' -f [Math]::Floor($remainingValue)
         $unitText = ' %'
         $meterColor = Get-PillAccent
-        if ($remainingValue -le 10) { $meterColor = $script:PillUi.Theme.Danger }
+        $isCritical = $remainingValue -le 10
+        if ($isCritical) { $meterColor = $script:PillUi.Theme.Danger }
         elseif ($remainingValue -le 25) { $meterColor = $script:PillUi.Theme.Warning }
         $frenchCulture = [Globalization.CultureInfo]::GetCultureInfo('fr-FR')
         $usedText = '{0:0} % utilisés' -f [Math]::Ceiling($usedValue)
@@ -302,35 +333,45 @@ function Set-PillMeter {
             $resetTime = [DateTimeOffset]$WindowData.ResetAt
             $resetLocal = $resetTime.ToLocalTime()
             $durationText = Format-PillDuration (($resetTime - [DateTimeOffset]::UtcNow).TotalSeconds)
-            $hintText = $durationText
             $resetText = 'Réinit. dans ' + $durationText
             $detailText = if ($resetLocal.Date -eq [DateTimeOffset]::Now.Date) { 'à ' + $resetLocal.ToString('HH:mm', $frenchCulture) } else { $resetLocal.ToString('ddd d MMM · HH:mm', $frenchCulture) }
             $viewControls[$Prefix + 'Card'].ToolTip = $usedText + ' · réinitialisation le ' + $resetLocal.ToString('dddd d MMMM yyyy à HH:mm', $frenchCulture)
         } else {
-            $hintText = 'sans échéance'; $resetText = 'Échéance non fournie'
+            $resetText = 'Échéance non fournie'
             $viewControls[$Prefix + 'Card'].ToolTip = $usedText
         }
         if ($windowState -eq 'Stale') { $detailText = 'Mesure ancienne' }
     }
     $viewControls[$Prefix + 'ValueNumber'].Text = $numberText
-    $viewControls[$Prefix + 'ValueUnit'].Text = $unitText
+    # Dans le rond, le « % » est collé au nombre pour tenir dans l'anneau.
+    $viewControls[$Prefix + 'ValueUnit'].Text = $unitText.Trim()
     $viewControls[$Prefix + 'BigNumber'].Text = $numberText
     $viewControls[$Prefix + 'BigUnit'].Text = $unitText
-    $viewControls[$Prefix + 'Hint'].Text = $hintText
     $viewControls[$Prefix + 'Reset'].Text = $resetText
     $viewControls[$Prefix + 'Remaining'].Text = $detailText
     $foregroundColor = $script:PillUi.Theme.Text
     if ($windowState -ne 'Ready') { $foregroundColor = $script:PillUi.Theme.Muted }
+    # Quota critique : le nombre passe lui aussi en rouge pour sauter aux yeux.
+    elseif ($isCritical) { $foregroundColor = $script:PillUi.Theme.Danger }
     $viewControls[$Prefix + 'ValueNumber'].Foreground = Get-PillBrush $foregroundColor
     $viewControls[$Prefix + 'BigNumber'].Foreground = Get-PillBrush $foregroundColor
-    # La barre et l'anneau représentent la part RESTANTE : ils se vident à l'usage.
-    $viewControls[$Prefix + 'Bar'].Width = 104 * $remainingFraction
-    $viewControls[$Prefix + 'Bar'].Background = Get-PillBrush $meterColor
-    $viewControls[$Prefix + 'Ring'].Stroke = Get-PillBrush $meterColor
-    Set-PillRing $viewControls[$Prefix + 'Ring'] $remainingFraction
-    $barOpacity = if ($windowState -eq 'Stale') { 0.45 } else { 1.0 }
-    $viewControls[$Prefix + 'Bar'].Opacity = $barOpacity
-    $viewControls[$Prefix + 'Ring'].Opacity = $barOpacity
+    # Les anneaux (pastille et panneau) représentent la part RESTANTE : ils se vident à l'usage.
+    $ringOpacity = if ($windowState -eq 'Stale') { 0.45 } else { 1.0 }
+    $ringGlow = $null
+    if ($isCritical -and $windowState -eq 'Ready') {
+        # Halo rouge autour de l'anneau quand il ne reste presque plus rien.
+        $ringGlow = [Windows.Media.Effects.DropShadowEffect]::new()
+        $ringGlow.Color = [Windows.Media.ColorConverter]::ConvertFromString($script:PillUi.Theme.Danger)
+        $ringGlow.ShadowDepth = 0; $ringGlow.BlurRadius = 9; $ringGlow.Opacity = 0.85
+        $ringGlow.Freeze()
+    }
+    foreach ($ringName in @('PillRing', 'Ring')) {
+        $ringElement = $viewControls[$Prefix + $ringName]
+        $ringElement.Stroke = Get-PillBrush $meterColor
+        $ringElement.Opacity = $ringOpacity
+        $ringElement.Effect = $ringGlow
+        Set-PillRing $ringElement $remainingFraction
+    }
 }
 
 function New-PillText {
@@ -529,7 +570,11 @@ function Update-PillUi {
     Set-PillMeter 'Secondary' $displaySecondary 'Semaine'
     $singleQuota = ($null -ne $displayPrimary -and $null -eq $displaySecondary)
     $secondVisibility = if ($singleQuota) { 'Collapsed' } else { 'Visible' }
-    foreach ($elementName in @('SecondaryGroup','SecondaryDivider','SecondaryCard')) { $viewControls[$elementName].Visibility = $secondVisibility }
+    $viewControls.SecondaryCard.Visibility = $secondVisibility
+    # La pastille ne montre deux ronds que si les deux quotas sont connus ; sinon un seul rond.
+    $doubleRing = ($null -ne $displayPrimary -and $null -ne $displaySecondary)
+    $viewControls.SecondaryGroup.Visibility = if ($doubleRing) { 'Visible' } else { 'Collapsed' }
+    Set-PillShape $viewControls.PillShape -Double $doubleRing
     $viewControls.SecondaryColumn.Width = if ($singleQuota) { [Windows.GridLength]::new(0) } else { [Windows.GridLength]::new(1, [Windows.GridUnitType]::Star) }
     $viewControls.PrimaryCard.Margin = if ($singleQuota) { [Windows.Thickness]::new(0) } else { [Windows.Thickness]::new(0, 0, 5, 0) }
 
@@ -568,7 +613,9 @@ function Update-PillUi {
         $statusMessage = 'En attente de ' + $script:PillSettings.Provider
         if ($isClaude) {
             $noticeMessage = switch ($apiError) {
-                'Expired' { 'La connexion de Claude Code a expiré. Ouvre Claude Code pour la renouveler ; le widget reprendra tout seul.' }
+                'Expired' { "Le renouvellement de la connexion Claude n’a pas abouti. Nouvel essai automatique dans 2 minutes ; inutile de redémarrer Claude." }
+                'Refreshing' { 'Renouvellement de la connexion Claude en cours…' }
+                'LoginRequired' { "La connexion Claude Code de VS Code n’est plus valide. Tape /login dans Claude Code (VS Code ou terminal) quand tu as un moment ; l’application de bureau n’est pas concernée." }
                 'RateLimited' { "Le service d’usage limite temporairement les demandes. Nouvelle tentative dans quelques minutes." }
                 'Unavailable' { "Le service d’usage de Claude ne répond pas. Vérifie la connexion Internet ; nouvelle tentative automatique." }
                 default { 'Interrogation du compte Claude en cours…' }
@@ -586,11 +633,15 @@ function Update-PillUi {
             $noticeMessage = "Une échéance est passée. Le quota reste inconnu jusqu’à la prochaine mesure."
         } elseif ($primaryState -eq 'Stale' -or $secondaryState -eq 'Stale') {
             $statusColor = $script:PillUi.Theme.Warning
-            $noticeMessage = if ($isClaude -and $apiError -eq 'Expired') { 'Dernière mesure connue : la connexion de Claude Code a expiré. Ouvre Claude Code pour la renouveler.' } else { 'Dernière mesure connue. La consommation sur un autre appareil peut ne pas encore apparaître ici.' }
+            $noticeMessage = if ($isClaude -and $apiError -eq 'LoginRequired') { "Dernière mesure connue : la connexion Claude Code de VS Code n’est plus valide. Tape /login dans Claude Code quand tu as un moment." }
+                elseif ($isClaude -and ($apiError -eq 'Expired' -or $apiError -eq 'Refreshing')) { "Dernière mesure connue : renouvellement de la connexion Claude en cours, nouvel essai automatique." }
+                else { 'Dernière mesure connue. La consommation sur un autre appareil peut ne pas encore apparaître ici.' }
         }
     }
     $viewControls.StatusText.Text = $statusMessage
     $viewControls.StatusDot.Fill = Get-PillBrush $statusColor
+    # Par discrétion, la pastille n'affiche son point d'état que s'il y a quelque chose à signaler.
+    $viewControls.StatusDot.Visibility = if ($statusColor -eq $script:PillUi.Theme.Live) { 'Collapsed' } else { 'Visible' }
     $viewControls.DetailStatusDot.Fill = Get-PillBrush $statusColor
     $viewControls.NoticeText.Text = $noticeMessage
     $viewControls.NoticePanel.Visibility = if ($noticeMessage) { 'Visible' } else { 'Collapsed' }
@@ -603,7 +654,7 @@ function Update-PillUi {
     $tooltipText = $script:PillSettings.Provider + ' · quotas restants · ' + $statusMessage
     foreach ($windowEntry in @(@('Primary', $displayPrimary), @('Secondary', $displaySecondary))) {
         if ($null -ne $windowEntry[1]) {
-            $tooltipText += "`n" + $viewControls[$windowEntry[0] + 'Title'].Text + ' : ' + $viewControls[$windowEntry[0] + 'ValueNumber'].Text + $viewControls[$windowEntry[0] + 'ValueUnit'].Text + ' restant · ' + $viewControls[$windowEntry[0] + 'Reset'].Text
+            $tooltipText += "`n" + $viewControls[$windowEntry[0] + 'Title'].Text + ' : ' + $viewControls[$windowEntry[0] + 'BigNumber'].Text + $viewControls[$windowEntry[0] + 'BigUnit'].Text + ' restant · ' + $viewControls[$windowEntry[0] + 'Reset'].Text
         }
     }
     $viewControls.PillSurface.ToolTip = $tooltipText + "`nClic : détails · Glisser : déplacer · Clic droit : menu"
@@ -614,8 +665,8 @@ function Move-PillIntoView {
     param([switch]$Reset)
     $windowObject = $script:PillUi.Main
     $windowObject.UpdateLayout()
-    $windowWidth = [Math]::Max(200, $windowObject.ActualWidth)
-    $windowHeight = [Math]::Max(50, $windowObject.ActualHeight)
+    $windowWidth = [Math]::Max(40, $windowObject.ActualWidth)
+    $windowHeight = [Math]::Max(40, $windowObject.ActualHeight)
     if ($Reset -or [double]::IsNaN($windowObject.Left) -or [double]::IsNaN($windowObject.Top)) {
         $workRect = [Windows.SystemParameters]::WorkArea
         $windowObject.Left = $workRect.Right - $windowWidth - 12
@@ -638,6 +689,16 @@ function Move-PillIntoView {
         $windowObject.Left = $workRect.Right - $windowWidth - 12
         $windowObject.Top = $workRect.Top + 12
     }
+}
+
+function Test-PillOnRightHalf {
+    param([double]$CenterX)
+    # Vrai si ce point horizontal (unités WPF) est dans la moitié droite de l'écran de la pastille.
+    $windowHandle = [Windows.Interop.WindowInteropHelper]::new($script:PillUi.Main).Handle
+    if ($windowHandle -eq [IntPtr]::Zero) { return $false }
+    $screenArea = [Windows.Forms.Screen]::FromHandle($windowHandle).WorkingArea
+    $scaleObject = [Windows.Interop.HwndSource]::FromHwnd($windowHandle).CompositionTarget.TransformFromDevice
+    return $CenterX -gt (($screenArea.Left + $screenArea.Width / 2) * $scaleObject.M11)
 }
 
 function Start-PillDetailAnimation {
@@ -676,9 +737,11 @@ function Show-PillDetails {
     # Panneau aligné sur le bord droit de la pastille (celle-ci est souvent en haut à droite).
     $alignedLeft = $script:PillUi.Main.Left + $script:PillUi.Main.ActualWidth - $detailObject.ActualWidth
     $detailObject.Left = [Math]::Max($screenLeft, [Math]::Min($alignedLeft, $screenRight - $detailObject.ActualWidth))
-    $preferredTop = $script:PillUi.Main.Top + $script:PillUi.Main.ActualHeight - 18
+    # La marge transparente de la pastille (16 px, agrandie avec elle) est recouverte par le panneau.
+    $pillMargin = 16 * (Get-PillScale) + 2
+    $preferredTop = $script:PillUi.Main.Top + $script:PillUi.Main.ActualHeight - $pillMargin
     $slideFrom = -8.0
-    if ($preferredTop + $detailObject.ActualHeight -gt $screenBottom) { $preferredTop = $script:PillUi.Main.Top - $detailObject.ActualHeight + 18; $slideFrom = 8.0 }
+    if ($preferredTop + $detailObject.ActualHeight -gt $screenBottom) { $preferredTop = $script:PillUi.Main.Top - $detailObject.ActualHeight + $pillMargin; $slideFrom = 8.0 }
     $detailObject.Top = [Math]::Max($screenTop, [Math]::Min($preferredTop, $screenBottom - $detailObject.ActualHeight))
     Start-PillDetailAnimation $slideFrom
     [void]$detailObject.Activate()
@@ -773,6 +836,19 @@ function Connect-PillUi {
         try { Set-PillStartup -Enabled ([bool]$senderObject.IsChecked) }
         catch { $senderObject.IsChecked = -not $senderObject.IsChecked; Write-PillLog $_; [void][Windows.MessageBox]::Show("Le raccourci de démarrage n’a pas pu être modifié.", 'Codex Pill') }
     } -Checkable -Checked (Test-Path -LiteralPath $script:PillStartupLink))
+    [void]$contextMenu.Items.Add([Windows.Controls.Separator]::new())
+    # Trois tailles au choix (le modèle de menu n'affiche pas de sous-menus).
+    $script:PillUi.Controls.SizeMenus = @()
+    foreach ($sizeChoice in @(@('Taille normale', 1.0), @('Grande taille', 1.35), @('Très grande taille', 1.7))) {
+        $sizeEntry = Add-PillMenuItem $contextMenu $sizeChoice[0] {
+            param($senderObject, $clickEvent)
+            Set-PillScale ([double]$senderObject.Tag)
+            Save-PillSettings
+        } -Checkable
+        $sizeEntry.Tag = $sizeChoice[1]
+        $script:PillUi.Controls.SizeMenus += $sizeEntry
+    }
+    [void]$contextMenu.Items.Add([Windows.Controls.Separator]::new())
     [void](Add-PillMenuItem $contextMenu 'Replacer en haut à droite' { Move-PillIntoView -Reset; Save-PillSettings })
     [void](Add-PillMenuItem $contextMenu 'Choisir le dossier des données…' { Select-PillSource })
     $script:PillUi.Controls.ClaudeEnableMenu = Add-PillMenuItem $contextMenu 'Activer la barre de statut Claude Code' { Enable-PillClaudeTracking }
@@ -782,15 +858,42 @@ function Connect-PillUi {
     [void](Add-PillMenuItem $contextMenu 'Quitter Codex Pill' { $script:PillUi.Main.Close() })
     $contextMenu.Add_Opened({ Update-PillProviderControls; Update-PillTray })
     $script:PillUi.Controls.PillSurface.ContextMenu = $contextMenu
+    Set-PillScale (Get-PillScale)
+    $script:PillPlaced = $false
+    $script:PillUi.Main.Add_SizeChanged({
+        param($senderObject, $sizeEvent)
+        # Passage d'un rond à deux (ou l'inverse) : une pastille rangée dans la moitié
+        # droite de l'écran garde son bord droit en place au lieu de déborder.
+        if (-not $script:PillPlaced -or -not $sizeEvent.WidthChanged -or $sizeEvent.PreviousSize.Width -le 0) { return }
+        try {
+            $mainWindow = $script:PillUi.Main
+            if (Test-PillOnRightHalf ($mainWindow.Left + $sizeEvent.PreviousSize.Width / 2)) {
+                $mainWindow.Left -= $sizeEvent.NewSize.Width - $sizeEvent.PreviousSize.Width
+                Save-PillSettings
+            }
+        } catch { Write-PillLog $_ }
+    })
     $script:PillUi.Main.Add_Loaded({
+        # Windows crée toute fenêtre avec une largeur minimale (environ 130 px) : plus
+        # large qu'un rond seul. Recalculer l'ajustement au contenu rend sa vraie taille.
+        $script:PillUi.Main.SizeToContent = 'Manual'
+        $script:PillUi.Main.SizeToContent = 'WidthAndHeight'
+        $script:PillUi.Main.UpdateLayout()
         try { New-PillTray } catch { Write-PillLog $_ }
         try {
             if ($null -ne $script:PillSettings.Left -and $null -ne $script:PillSettings.Top) {
                 $script:PillUi.Main.Left = [double]$script:PillSettings.Left
                 $script:PillUi.Main.Top = [double]$script:PillSettings.Top
+                # À droite de l'écran, c'est le bord droit mémorisé qui fait foi.
+                $savedRight = $script:PillSettings.Right
+                $currentWidth = $script:PillUi.Main.ActualWidth
+                if ($null -ne $savedRight -and $currentWidth -gt 0 -and (Test-PillOnRightHalf ([double]$savedRight - $currentWidth / 2))) {
+                    $script:PillUi.Main.Left = [double]$savedRight - $currentWidth
+                }
                 Move-PillIntoView
             } else { Move-PillIntoView -Reset }
         } catch { Write-PillLog $_; Move-PillIntoView -Reset }
+        $script:PillPlaced = $true
     })
     $script:PillUi.Main.Add_Closing({
         $script:PillExiting = $true
